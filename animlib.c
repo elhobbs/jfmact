@@ -115,6 +115,10 @@ void loadpage (uint16 pagenumber, uint16 *pagepointer)
       }
    }
 
+static uint16 read16(uint8 *ptr) {
+   uint16 ret = ptr[0] | (ptr[1] << 8);
+   return ret;
+}
 
 //****************************************************************************
 //
@@ -158,7 +162,7 @@ run:
 
    goto nextOp;
 longOp:
-   wordCnt = B_LITTLE16(*((uint16 *)srcP));
+   wordCnt = read16(srcP);
    srcP += sizeof(uint16);
    if ((int16)wordCnt <= 0)
       goto notLongSkip;       /* Do SIGNED test. */
@@ -203,6 +207,8 @@ stop:   /* all done */
 //
 //****************************************************************************
 
+void waitforit(char *str);
+
 void renderframe (uint16 framenumber, uint16 *pagepointer)
    {
    uint16 offset=0;
@@ -215,20 +221,28 @@ void renderframe (uint16 framenumber, uint16 *pagepointer)
 
    for(i = 0; i < destframe; i++)
       {
-      offset += B_LITTLE16(pagepointer[i]);
+         //printf("%08x %08x", pagepointer, (unsigned int)read16(pagepointer+i));
+         //waitforit("destframe");
+      offset += read16(pagepointer+i);
       }
    ppointer = (byte *)pagepointer;
 
    ppointer+=anim->curlp.nRecords*2+offset;
    if(ppointer[1])
       {
-      ppointer += (4 + B_LITTLE16(((uint16 *)ppointer)[1]) + (B_LITTLE16(((uint16 *)ppointer)[1]) & 1));
+         //printf("%08x %08x", pagepointer,  (unsigned int)read16(pagepointer+1));
+         //waitforit("ppointer[1]");
+      ppointer += (4 + read16(ppointer+1) + (read16(ppointer+1) & 1));
       }
    else
       {
+         //printf("%08x", pagepointer);
+         //waitforit("ppointer");
       ppointer+=4;
       }
 
+         //printf("%08x %08x %08x", pagepointer,anim, anim->imagebuffer);
+         //waitforit("CPlayRunSkipDump");
    CPlayRunSkipDump (ppointer, anim->imagebuffer);
    }
 
